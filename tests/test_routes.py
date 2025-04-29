@@ -54,21 +54,18 @@ class TestAccountService(TestCase):
     #  H E L P E R   M E T H O D S
     ######################################################################
 
-    def _create_accounts(self, count):
-        """Factory method to create accounts in bulk"""
-        accounts = []
-        for _ in range(count):
-            account = AccountFactory()
-            response = self.client.post(BASE_URL, json=account.serialize())
-            self.assertEqual(
-                response.status_code,
-                status.HTTP_201_CREATED,
-                "Could not create test Account",
-            )
-            new_account = response.get_json()
-            account.id = new_account["id"]
-            accounts.append(account)
-        return accounts
+    def _create_account(self, name, email, phone_number):
+        """Helper method to create a single account and return the result"""
+        account_data = {
+        "name": name,
+        "email": email,
+        "address": "123 Main St",
+        "phone_number": phone_number,
+        "date_joined": "2023-01-01"
+        }
+        response = self.client.post(BASE_URL, json=account_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        return response.get_json()
 
     ######################################################################
     #  A C C O U N T   T E S T   C A S E S
@@ -124,3 +121,14 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ADD YOUR TEST CASES HERE ...
+    def test_read_account(self):
+        """It should Read a single Account"""
+        account = self._create_account("Alice", "alice@example.com", "1112223333")
+    
+        response = self.client.get(f"/accounts/{account['id']}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.get_json()
+        self.assertEqual(data["name"], "Alice")
+        self.assertEqual(data["email"], "alice@example.com")
+        self.assertEqual(data["phone_number"], "1112223333")
